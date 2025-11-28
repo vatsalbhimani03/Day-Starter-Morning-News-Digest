@@ -9,5 +9,12 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 
-3. Run check_MongoDB_conn.py file to check DB connection
+Optional:
+3. Run check_MongoDB_conn.py file to check DB connection (TEST)
 python3 check_MongoDB_conn.py
+4. Run check_NewsAPI_conn.py file to check NewsAPI connection (TEST)
+python3 check_NewsAPI_conn.py
+
+Mandatory:
+5. Run main.py file & enter input
+python3 main.py
