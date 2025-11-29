@@ -1,10 +1,14 @@
-from model import Subscriber
+from datetime import datetime
+from model import Subscriber, DigestResult
 from Infrastructure.repository import MongoDBRepo
+from Infrastructure.email import EmailService
+
 
 class Controller:
 
     def __init__(self, country: str = "ca"):
         self.repo = MongoDBRepo()
+        self.email_service = EmailService()
         
 
     # ---------- Methods/Actions ----------
@@ -16,16 +20,28 @@ class Controller:
     def unsubscribe(self, email: str) -> str:
         # Remove subscriber from database - soft delete (set active to False)
         return self.repo.remove_subscriber(email)
-
+    
     def send_now(self, email: str) -> str:
-        # Send news digest to the specified email 
+        # Ensure the subscriber exists (keeps the flow consistent with your CLI)
         sub = self.repo.get_subscriber(email)
         if not sub:
             return "Subscriber not found or inactive."
-        
-        # implementation to fetch news and send email
 
-        return "Digest Sent (0 items)"
+        subject = f"DayStarter – Test Digest • {datetime.today():%b %d, %Y}"
+        lines = [
+            f"Hello {email},",
+            "This is a test email from DayStarter.",
+            "If you can read this, your email service is wired correctly.",
+            "Have a great day!",
+            "~DayStarter"
+        ]
+
+        ok = self.email_service.send_email(email, subject, lines)
+        if ok:
+            return "Test Digest Sent (console mode)."
+        else:
+            return "Digest Sent (0 items)"
+    
 
     def send_all_due_now(self) -> str:
         # Send news digests to all subscribers due for sending 
