@@ -1,3 +1,5 @@
+from typing import Optional
+
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -16,6 +18,8 @@ class Article:
     title: str
     url: str
     source: str
+    description: Optional[str] = None
+    published_at: Optional[str] = None
 
 @dataclass
 class DigestResult:
