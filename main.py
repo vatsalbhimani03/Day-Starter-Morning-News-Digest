@@ -1,5 +1,5 @@
 from typing import List
-from config import SEND_HOUR_LOCAL,DEFAULT_TOPICS, TIMEZONE
+from config import SEND_HOUR_LOCAL,DEFAULT_TOPICS, TIMEZONE, NEWS_COUNTRY
 from controller import Controller
 
 # get user input with prompt and optional default
@@ -39,14 +39,14 @@ def menu() -> str:
     return user_input("Choose: ")
  
 def main():
-    app = Controller(country="ca")  # "ca" for Canada, "us" for USA
+    app = Controller(country=NEWS_COUNTRY)  # "us" for USA, "ca" for Canada, etc.
     while True:
         choice = menu() 
         if choice == "1":
             email = user_input("Email: ")
             topics = parse_topics(user_input(f"Topics (write comma saperated) [{', '.join(DEFAULT_TOPICS)}]: "))
             timezone = user_input(f"Timezone [America/Toronto or Asia/Kolkata]: ", TIMEZONE)
-            sendhour = int(user_input("Send hour (0-23): ", "7"))
+            sendhour = int(user_input("Send hour (0-23): ", SEND_HOUR_LOCAL))
             print(app.subscribe(email, topics, timezone, sendhour))
         elif choice == "2":
             print(app.unsubscribe(user_input("Email: ")))

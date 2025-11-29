@@ -7,7 +7,7 @@ from news.news_facade import NewsFacade
 
 class Controller:
 
-    def __init__(self, country: str = "ca"):
+    def __init__(self, country: str):
         self.repo = MongoDBRepo()
         self.email_service = EmailService()
         self.facade = NewsFacade("newsapi", country=country)
@@ -32,7 +32,7 @@ class Controller:
         topics = sub["topics"] or sub.topics
         articles = self.facade.get_top_headlines(topics)
 
-        print(f"Fetched Articles: {articles}")
+        print(f"Fetched Articles: {articles}") # []
 
         # Send test digest email 
         subject = f"DayStarter – Test Digest • {datetime.today():%b %d, %Y}"

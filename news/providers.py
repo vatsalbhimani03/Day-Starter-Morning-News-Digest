@@ -13,6 +13,7 @@ class INewsProvider(ABC):
 class NewsApiClientAdapter(INewsProvider):
     BASE_TOP = "https://newsapi.org/v2/top-headlines"
 
+    # Mapping of common topics to NewsAPI categories
     CATEGORY_MAP = {
         "tech": "technology", "technology": "technology", "ai": "technology",
         "finance": "business", "business": "business", "stocks": "business", "stock market": "business",
@@ -32,7 +33,7 @@ class NewsApiClientAdapter(INewsProvider):
 
         # converts raw NewsAPI article JSON to Article dataclass (Adapter pattern).
         def adapt(items):
-            out: list[Article] = []
+            out = [] # list[Article]
             for a in items or []:
                 out.append(Article(
                     title=a.get("title") or "(no title)",
@@ -45,7 +46,7 @@ class NewsApiClientAdapter(INewsProvider):
 
         # removes duplicates by URL/title so overlapping queries don’t repeat items.
         def deduplication(arts: list[Article]) -> list[Article]:
-            seen_titles, seen_urls, unique = set(), set(), []
+            seen_titles, seen_urls, unique = set(), set(), [] # list[Article]
             for a in arts:
                 if (a.url and a.url in seen_urls) or (a.title and a.title in seen_titles):
                     continue
@@ -54,6 +55,7 @@ class NewsApiClientAdapter(INewsProvider):
                 if a.title: seen_titles.add(a.title)
             return unique
 
+        # Per-topic queries (category first, else keyword in top-headlines)
         for raw in topics:
             if len(results) >= target_count: 
                 break
@@ -65,11 +67,13 @@ class NewsApiClientAdapter(INewsProvider):
             else:
                 params["q"] = t
 
-            r = requests.get(self.BASE_TOP, params=params, headers=headers, timeout=10)
-            data = r.json()
-            r.raise_for_status()
-            results = deduplication(results + adapt(data.get("articles")))
-
+            try:
+                r = requests.get(self.BASE_TOP, params=params, headers=headers, timeout=10)
+                data = r.json()
+                r.raise_for_status()
+                results = deduplication(results + adapt(data.get("articles")))
+            except Exception:
+                pass
 
         return results[:target_count]
     

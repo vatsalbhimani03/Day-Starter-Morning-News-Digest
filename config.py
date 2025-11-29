@@ -13,6 +13,7 @@ DBNAME = os.getenv("MONGODB_DBNAME", "daystarter").strip()
 
 # News API Configuration
 NEWS_API = os.getenv("NEWS_API_KEY", "").strip()
+NEWS_COUNTRY = os.getenv("NEWS_COUNTRY", "").strip().lower()
  
 # SendGrid Email Configuration
 SENDGRID_API = os.getenv("SENDGRID_API_KEY", "").strip()
