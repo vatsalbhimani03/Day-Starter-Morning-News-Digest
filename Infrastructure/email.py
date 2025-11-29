@@ -1,5 +1,8 @@
 from config import SENDER_EMAIL, SENDGRID_API
 
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+
 class EmailService:
     def send_email(self, to_email: str, subject: str, lines: list[str]) -> bool:
         body_html = "<br>".join(lines) if lines else "No matching items today."
@@ -10,13 +13,10 @@ class EmailService:
             "</body></html>"
         )
 
-        # Console mode if keys are missing
+        # If SendGrid config is missing, print email to console
         if not SENDGRID_API or not SENDER_EMAIL:
             print(f"\n--- EMAIL (console) ---\nTo: {to_email}\nSubject: {subject}\n{html}\n--- END ---\n")
             return True
-
-        from sendgrid import SendGridAPIClient
-        from sendgrid.helpers.mail import Mail
 
         sg = SendGridAPIClient(SENDGRID_API)
         msg = Mail(from_email=SENDER_EMAIL, to_emails=to_email, subject=subject, html_content=html)

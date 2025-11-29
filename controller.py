@@ -3,6 +3,7 @@ from model import Subscriber, DigestResult
 from Infrastructure.repository import MongoDBRepo
 from Infrastructure.email import EmailService
 from news.news_facade import NewsFacade
+from news.strategies import KeywordRankingStrategy, BulletSummarizationStrategy
 
 
 class Controller:
@@ -11,8 +12,9 @@ class Controller:
         self.repo = MongoDBRepo()
         self.email_service = EmailService()
         self.facade = NewsFacade("newsapi", country=country)
+        self.ranker = KeywordRankingStrategy()
+        self.summarizer = BulletSummarizationStrategy()
 
-        
     # ---------- Methods/Actions ----------
     def subscribe(self, email: str, topics: list[str], timezone: str, send_hour: int) -> str:
         # Add subscriber to database - create or update
@@ -30,9 +32,17 @@ class Controller:
             return "Subscriber not found or inactive."
 
         topics = sub["topics"] or sub.topics
+
+        # Facade+Adapater & Factory Pattern - Fetch Articles from NewsAPI
         articles = self.facade.get_top_headlines(topics)
 
-        print(f"Fetched Articles: {articles}") # []
+        # Strategy Pattern - Rank and Summarize Articles
+        ranked = self.ranker.rank_articles(topics, articles)
+        summary = self.summarizer.summarize_articles(topics, ranked)
+
+        print(f"\n\nFetched Articles: {articles}") # [list of Article]
+        print(f"\n\nRanked Articles: {ranked}") 
+        print(f"\n\nSummarized Articles: {summary}") 
 
         # Send test digest email 
         subject = f"DayStarter – Test Digest • {datetime.today():%b %d, %Y}"
