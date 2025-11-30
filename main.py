@@ -53,7 +53,7 @@ def main():
         elif choice == "3":
             print(app.send_now(user_input("Email: ")))
         elif choice == "4":
-            print(app.send_all_due_now())
+            print(app.send_all_active(force=True))
         elif choice == "5":
             email = user_input("Email: ")
             for h in app.history(email):

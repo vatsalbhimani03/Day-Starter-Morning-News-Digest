@@ -1,4 +1,6 @@
 from datetime import datetime, date
+from zoneinfo import ZoneInfo
+
 from model import Subscriber, DigestResult
 from Infrastructure.repository import MongoDBRepo
 from Infrastructure.email import EmailService
@@ -74,6 +76,20 @@ class Controller:
 
         status = "sent" if ok and ranked else ("no_items" if ok else "error")
         return f"Digest: {status} (items={len(ranked)})"
+
+    def send_all_active(self, force: bool) -> str:
+        # force=True - manual mode: push now to everyone.
+        sent = 0
+        today = date.today().isoformat()
+
+        # Send news digests to all active subscribers
+        for sub in self.repo.get_active_subscribers():
+
+            msg = self.send_now(sub["email"])
+            if msg.startswith(("Digest: sent", "Digest: no_items")):
+                sent += 1
+
+        return f"Processed {sent} subscriber(s)."
 
     def send_all_due_now(self) -> str:
         # Send news digests to all subscribers due for sending 
