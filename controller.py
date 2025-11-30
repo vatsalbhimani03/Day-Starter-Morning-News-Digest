@@ -74,7 +74,12 @@ class Controller:
         # 5) Send
         ok = self.email_service.send_email(email, subject, header_lines + item_lines + footer_lines)
 
+        # 6) Log history
         status = "sent" if ok and ranked else ("no_items" if ok else "error")
+        self.repo.log_history(
+            DigestResult(email=email, status=status, count=len(ranked),
+                        error=None if ok else "send_error")
+        )
         return f"Digest: {status} (items={len(ranked)})"
 
     def send_all_active(self, force: bool = False) -> str:
@@ -87,7 +92,7 @@ class Controller:
         for sub in self.repo.get_active_subscribers():
             if not force: # scheduler mode
                 try:
-                    now_local_hour = datetime.now(ZoneInfo(sub["timezone"])).hour # (0-23) get current hour in subscriber's timezone
+                    now_local_hour = datetime.now(ZoneInfo(sub["timezone"])).hour # (0-23 format) get current hour in subscriber's timezone
                 except Exception:
                     now_local_hour = datetime.now().hour
 
@@ -105,10 +110,13 @@ class Controller:
 
         return f"Processed {sent} subscriber(s)."
 
+    # scheduler mode
     def send_all_due_now(self) -> str:
-        # Send news digests to all subscribers due for sending 
+        # Send news digests to all subscribers due for sending if near their scheduled time
         return self.send_all_active(force=False)
 
+    # To retrieve sending history per subscriber
     def history(self, email: str) -> list[dict]:
         # Retrieve sending history for the specified email 
-        return []
+        return self.repo.get_digest_history(email)
+    

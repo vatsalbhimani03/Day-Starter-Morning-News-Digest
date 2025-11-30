@@ -2,14 +2,15 @@ from typing import Any, Optional
 from pymongo import MongoClient, ASCENDING
 
 from config import MONGODB_CONN, DBNAME
-from model import Subscriber
+from model import Subscriber, DigestResult
 
 class MongoDBRepo:
     def __init__(self):
         self.client = MongoClient(MONGODB_CONN, serverSelectionTimeoutMS=5000)
         self.db = self.client[DBNAME]
-        self.subscribers = self.db["subscribers"]
-        self.guard = self.db["sent_guard"]
+        self.subscribers = self.db["subscribers"]  # collection for subscribers table
+        self.history = self.db["history"] # collection for digest history logging
+        self.guard = self.db["sent_guard"] # collection for last sent date guard
         # Ensure unique index on email field
         self.subscribers.create_index([("email", ASCENDING)], unique=True)
         self.guard.create_index([("email", ASCENDING)], unique=True)
@@ -48,8 +49,13 @@ class MongoDBRepo:
             return g.get("date")
         else:
             return None
-
     # set last sent date to today (scheduler use)
     def set_last_sent_date(self, email: str, date_str: str):
         self.guard.update_one({"email": email}, {"$set": {"date": date_str}}, upsert=True)
 
+    # Logging and retrieving digest history
+    def log_history(self, r: DigestResult):
+        self.history.insert_one(r.__dict__)
+
+    def get_digest_history(self, email: str, limit: int = 10) -> list[dict[str, Any]]:
+        return list(self.history.find({"email": email}).sort("created_at", -1).limit(limit))
