@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 from pymongo import MongoClient, ASCENDING
 
 from config import MONGODB_CONN, DBNAME
@@ -9,8 +9,10 @@ class MongoDBRepo:
         self.client = MongoClient(MONGODB_CONN, serverSelectionTimeoutMS=5000)
         self.db = self.client[DBNAME]
         self.subscribers = self.db["subscribers"]
+        self.guard = self.db["sent_guard"]
         # Ensure unique index on email field
         self.subscribers.create_index([("email", ASCENDING)], unique=True)
+        self.guard.create_index([("email", ASCENDING)], unique=True)
     
     def upsert_subscriber(self, s: Subscriber) -> str:
         # Upsert subscriber in MongoDB - create or update
@@ -38,3 +40,16 @@ class MongoDBRepo:
     def get_active_subscribers(self) -> list[dict[str, Any]]:
         # Get all active subscribers from MongoDB 
         return list(self.subscribers.find({"active": True}))
+
+    # get last sent date for subscriber (scheduler use)
+    def last_sent_date(self, email: str) -> Optional[str]:
+        g = self.guard.find_one({"email": email})
+        if g:
+            return g.get("date")
+        else:
+            return None
+
+    # set last sent date to today (scheduler use)
+    def set_last_sent_date(self, email: str, date_str: str):
+        self.guard.update_one({"email": email}, {"$set": {"date": date_str}}, upsert=True)
+
