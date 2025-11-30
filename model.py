@@ -26,4 +26,5 @@ class DigestResult:
     email: str
     status: str              
     count: int
+    error: Optional[str] = None
     created_at: datetime = field(default_factory=datetime.now)

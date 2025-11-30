@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from model import Subscriber, DigestResult
 from Infrastructure.repository import MongoDBRepo
 from Infrastructure.email import EmailService
@@ -26,13 +26,14 @@ class Controller:
         return self.repo.remove_subscriber(email)
     
     def send_now(self, email: str) -> str:
-        # Ensure the subscriber exists
+        # 1) Look up subscriber (dict or dataclass) - Ensure the subscriber exists
         sub = self.repo.get_subscriber(email)
         if not sub:
             return "Subscriber not found or inactive."
 
         topics = sub["topics"] or sub.topics
 
+        # 2) Fetch + Rank + Summarize 
         # Facade+Adapater & Factory Pattern - Fetch Articles from NewsAPI
         articles = self.facade.get_top_headlines(topics)
 
@@ -44,21 +45,35 @@ class Controller:
         print(f"\n\nRanked Articles: {ranked}") 
         print(f"\n\nSummarized Articles: {summary}") 
 
-        # Send test digest email 
-        subject = f"DayStarter – Test Digest • {datetime.today():%b %d, %Y}"
-        lines = [
-            f"Hello {email},",
-            "This is a test email from DayStarter.",
-            "If you can read this, your email service is wired correctly.",
-            "Have a great day!",
-            "~DayStarter"
+        # 3) Subject (single line)
+        topics_display = ", ".join(t.title() for t in topics) or "Top Stories"
+        today_str = date.today().strftime("%b %d, %Y")
+        subject = f"DayStarter – Morning Digest • {topics_display} • {today_str}"
+
+        # 4) Body (simple HTML-friendly lines)
+        header_lines = [
+            f"Good morning, here is your news digest for {today_str}.",
+            "Curated headlines from trusted sources and ranked for you.\n",
+            (summary[0] if summary else f"Top {topics_display} picks"),
+            ""
         ]
-        ok = self.email_service.send_email(email, subject, lines)
-        if ok:
-            return "Test Digest Sent (console mode)."
+
+        if ranked:
+            item_lines = [f"• <a href=\"{a.url}\">{a.title}</a> — {a.source}" for a in ranked[:10]]
         else:
-            return "Digest Sent (0 items)"
-    
+            item_lines = ["No matching items today. Try broader topics like Tech or Finance or Health."]
+
+        footer_lines = [
+            "",
+            "~ DayStarter",
+            "<span style='font-size:12px;color:#888'>Update your topics/time by choosing “Subscribe” again in the app.</span>"
+        ]
+
+        # 5) Send
+        ok = self.email_service.send_email(email, subject, header_lines + item_lines + footer_lines)
+
+        status = "sent" if ok and ranked else ("no_items" if ok else "error")
+        return f"Digest: {status} (items={len(ranked)})"
 
     def send_all_due_now(self) -> str:
         # Send news digests to all subscribers due for sending 

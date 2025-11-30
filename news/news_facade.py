@@ -6,7 +6,7 @@ class NewsFacade:
     def __init__(self, provider_name: str, country: str):
         self.provider = ProviderFactory.create(provider_name)
         self.contry = country
-
+        
     def get_top_headlines(self, topics: list[str], page_size: int = 10) -> list[Article]:
         return self.provider.fetch_top_headlines(topics, country=self.contry, page_size=page_size)
 
