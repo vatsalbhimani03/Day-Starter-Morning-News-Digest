@@ -18,7 +18,10 @@ class EmailService:
             print(f"\n--- EMAIL (console) ---\nTo: {to_email}\nSubject: {subject}\n{html}\n--- END ---\n")
             return True
 
-        sg = SendGridAPIClient(SENDGRID_API)
-        msg = Mail(from_email=SENDER_EMAIL, to_emails=to_email, subject=subject, html_content=html)
-        resp = sg.send(msg)
-        return 200 <= resp.status_code < 300
+        try:
+            sg = SendGridAPIClient(SENDGRID_API)
+            msg = Mail(from_email=SENDER_EMAIL, to_emails=to_email, subject=subject, html_content=html)
+            resp = sg.send(msg)
+            return 200 <= resp.status_code < 300
+        except Exception:
+            return False

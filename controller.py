@@ -18,15 +18,18 @@ class Controller:
         self.summarizer = BulletSummarizationStrategy()
 
     # ---------- Methods/Actions ----------
+    # Option 1
     def subscribe(self, email: str, topics: list[str], timezone: str, send_hour: int) -> str:
         # Add subscriber to database - create or update
         s = Subscriber(email=email, topics=topics, timezone=timezone, send_hour=send_hour)
         return self.repo.upsert_subscriber(s)
     
+    # Option 2
     def unsubscribe(self, email: str) -> str:
         # Remove subscriber from database - soft delete (set active to False)
         return self.repo.remove_subscriber(email)
     
+    # Option 3
     def send_now(self, email: str) -> str:
         # 1) Look up subscriber (dict or dataclass) - Ensure the subscriber exists
         sub = self.repo.get_subscriber(email)
@@ -82,6 +85,7 @@ class Controller:
         )
         return f"Digest: {status} (items={len(ranked)})"
 
+    # Option 4
     def send_all_active(self, force: bool = False) -> str:
         # force=False (by efault) - scheduler mode: only send when local hour == send_hour and enforce one-per-day guard.
         # force=True - manual mode: push now to everyone.
@@ -110,13 +114,15 @@ class Controller:
 
         return f"Processed {sent} subscriber(s)."
 
-    # scheduler mode
+    # Option 5 - To retrieve sending history per subscriber
+    def history(self, email: str) -> list[dict]:
+        # Retrieve sending history for the specified email 
+        return self.repo.get_digest_history(email)
+    
+    # Option 6 - scheduler mode
     def send_all_due_now(self) -> str:
         # Send news digests to all subscribers due for sending if near their scheduled time
         return self.send_all_active(force=False)
 
-    # To retrieve sending history per subscriber
-    def history(self, email: str) -> list[dict]:
-        # Retrieve sending history for the specified email 
-        return self.repo.get_digest_history(email)
+
     

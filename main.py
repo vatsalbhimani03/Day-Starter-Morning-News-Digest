@@ -1,4 +1,3 @@
-from typing import List
 from config import SEND_HOUR_LOCAL,DEFAULT_TOPICS, TIMEZONE, NEWS_COUNTRY
 from controller import Controller
 
@@ -12,7 +11,7 @@ def user_input(prompt: str, default: str = "") -> str:
     return (val or default).strip()
 
 # set Topics either from user input or default
-def parse_topics(raw: str) -> List[str]:
+def parse_topics(raw: str) -> list[str]:
     topics = []
     for part in raw.split(","):
         part = part.strip().lower()
